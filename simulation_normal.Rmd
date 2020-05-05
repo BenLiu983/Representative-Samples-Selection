@@ -1,0 +1,307 @@
+---
+title: "Representative samples selection by 5 methods in an implicit Gaussian mixture model"
+author: "Ben (Zhibin) Liu"
+date: "April 30, 2020"
+output: html_document
+---
+
+1.   Data set up (3 different sigma) 
+
+```{r}
+setwd("C:/Users/liuzh/Desktop/Project/final report/code/final version")
+source("function_normal.r")
+
+# simulate representative samples f1, 2 dim normal distribution
+n1=5000
+set.seed(1234)
+library(MASS)
+library(mvtnorm)
+mu1 = c(2,4,6,8,10)
+sigma1 = diag(1,5,5)
+
+# can change the sigma to autoregressive or compound symmetry 
+#sigma1 = sigma_auto(5,0.5)
+#sigma1 = sigma_compound(5,0.5)
+
+x1 = mvrnorm(n1,mu1,sigma1)
+
+#simulate noise samples f2
+n2=2500
+eps1 = rnorm(n2,0,1)
+mu2 = c(2,3,4,5)
+sigma2 = diag(1,4,4)
+x22 = mvrnorm(n2,mu2,sigma2)
+x2_2 = cbind(rep(1,n2),x22)
+y2=x2_2 %*% c(1,1,1,1,1)  +eps1
+x22 = cbind(x22,y2)
+
+#simulate noise samples f3
+n3=n1-nrow(x22)
+x3_1 = runif(n3, -10,20)
+x3_2 = runif(n3, -10,20)
+x3_3 = runif(n3, -10,20)
+x3_4 = runif(n3, -10,20)
+x3_5 = runif(n3, -10,20)
+x3  = as.matrix(cbind(x3_1,x3_2,x3_3,x3_4,x3_5))
+
+# combine 3 datasets 
+x_step00 = rbind(x1,x22,x3)
+colnames(x_step00) <- c("x1","x2","x3","x4","x5")
+N=nrow(x_step00)
+
+list= c(1:N)
+    
+```
+
+2.  AM and FAM
+```{r}
+# 100 simulations 
+library(lubridate)
+
+mu_am = c(0,0,0,0,0)
+mu_fam = c(0,0,0,0,0)
+psr_am = 0
+fdr_am = 0
+psr_fam = 0
+fdr_fam = 0
+fn_am = 0
+fn_fam = 0
+nn= 100
+beta_true = c(2,4,6,8,10)
+
+# am time
+ptm <- proc.time()
+for (i in 1:nn)
+{
+  am_normal(DATA=x_step00,sig=diag(1,5,5),lambda=23, p1_low=0.1,select_row=list)
+  
+  # sum fn
+  fn_am = fn_am + length(final_row)
+  
+  # sum mu
+  mu_am =  mu_am + final_mu
+
+  # sum psr and fdr
+  psr_am = psr_am + length(which (final_row< (n1+1)))/n1
+  fdr_am = fdr_am + length(which (final_row> n1))/length(final_row)
+}
+
+# am time 
+t_am= (proc.time() - ptm)/nn
+t_am
+
+# ave psr, fdr, fn, dev
+psr_am/nn
+fdr_am/nn
+fn_am/nn
+norm(mu_am/nn - beta_true,type="2") / norm(beta_true,type="2")
+
+# fam time
+ptm2 <- proc.time()
+for (i in 1:nn)
+{
+  fam_normal(DATA=x_step00,sig=diag(1,5,5),lambda=23, p1_low=0.1,select_row=list)
+  
+  # sum fn
+  fn_fam = fn_fam + length(final_row_bt)
+  
+  # sum mu
+  mu_fam = mu_fam + final_mu_bt
+  
+  # sum psr and fdr
+  psr_fam = psr_fam + length(which (final_row_bt< (n1+1)))/n1
+  fdr_fam = fdr_fam + length(which (final_row_bt> n1))/length(final_row_bt)
+
+}
+
+# fam time 
+t_fam= (proc.time() - ptm2)/nn
+t_fam
+
+# ave psr, fdr, fn, dev
+psr_fam/nn
+fdr_fam/nn
+fn_fam/nn
+norm(mu_fam/nn - beta_true,type="2") / norm(beta_true,type="2")
+
+            # summary: fam   psr    fdr    time    dev    true number  
+
+
+```
+
+
+3.  Competitor 1 - MLE (assume all samples are from 1 model)
+```{r}
+#install.packages("fMultivar")
+library(fMultivar)
+
+# 100 simulations
+beta0 = c(0,0,0,0,0)
+nn=100
+
+ptm=proc.time()
+
+for (i in 1:nn)
+{
+  beta_compe1 = msnFit(x_step00)@fit$estimated$`beta`
+  beta0 = beta0 + beta_compe1
+}
+
+t_am= (proc.time() - ptm)/nn
+t_am
+
+# results
+beta_true = c(2,4,6,8,10)
+beta0/nn
+dev_compe1 = norm(beta0/nn - beta_true,type="2") / norm(beta_true,type="2")
+dev_compe1
+
+      # conclusion:         time    dev 
+
+```
+
+
+4.  Competitor 2 - EM (assume the dataset consists of 2 different normal distribution)
+```{r}
+# install.packages("mclust")
+beta_true = c(2,4,6,8,10)
+library(mclust)
+
+# 100 simulations
+beta_compe210=c(0,0,0,0,0)
+beta_compe220=c(0,0,0,0,0)
+
+psr_compe210=0
+fdr_compe210=0
+
+psr_compe220=0
+fdr_compe220=0
+fn_compe210=0
+fn_compe220=0
+
+beta0 = c(0,0,0,0,0)
+nn= 3
+ptm=proc.time()
+
+for (i in 1:nn)
+{
+  # compute final beta
+  mix= Mclust(x_step00, 2)[12]
+  beta_compe2.1 = mix$`parameters`$mean[,1]
+  beta_compe210 = beta_compe210 + beta_compe2.1
+
+  beta_compe2.2 = mix$`parameters`$mean[,2]
+  beta_compe220 = beta_compe220 + beta_compe2.2
+  
+  # compute psr, fdr and fn
+  clu=Mclust(x_step00, 2)[14]
+
+  correct_entry1 = which(clu$classification[1:n1]==1)
+  psr_compe2.1 = length(correct_entry1)/n1
+  psr_compe210 = psr_compe210 + psr_compe2.1 
+  fdr_compe2.1 = length(which(clu$classification[(n1+1):N]==1))/length(which(clu$classification[1:N]==1))
+  fdr_compe210 = fdr_compe210 + fdr_compe2.1
+  
+  fn_compe2.1=length(which(clu$classification[1:N]==1))
+  fn_compe210 = fn_compe210 + fn_compe2.1
+
+  correct_entry2 = which(clu$classification[1:n1]==2)
+  psr_compe2.2 = length(correct_entry2)/n1
+  psr_compe220 = psr_compe220 + psr_compe2.2 
+  
+  fdr_compe2.2 = length(which(clu$classification[(n1+1):N]==2))/length(which(clu$classification[1:N]==2))
+  fdr_compe220 = fdr_compe220 + fdr_compe2.2
+  
+  fn_compe2.2=length(which(clu$classification[1:N]==2))
+  fn_compe220 = fn_compe220 + fn_compe2.2
+}
+
+# results
+
+t_am= (proc.time() - ptm)/nn
+t_am
+
+psr_compe210/nn
+fdr_compe210/nn
+fn_compe210/nn
+norm(beta_compe210/nn - beta_true,type="2") / norm(beta_true,type="2")
+
+psr_compe220/nn
+fdr_compe220/nn
+fn_compe220/nn
+norm(beta_compe220/nn - beta_true,type="2") / norm(beta_true,type="2")
+
+#  conclusion clu1: psr    fdr     time   dev    true number  
+            # clu2: psr    fdr     time   dev    true number  
+           
+```
+
+
+5. Competitor 3 - K-means (assume dataset consists of 2 clusters)
+```{r}
+# 100 simulations
+beta_true = c(2,4,6,8,10)
+
+beta_compe310=c(0,0,0,0,0)
+beta_compe320=c(0,0,0,0,0)
+
+psr_compe310=0
+fdr_compe310=0
+
+psr_compe320=0
+fdr_compe320=0
+fn_compe310=0
+fn_compe320=0
+
+beta0 = c(0,0,0,0,0)
+nn=100
+ptm=proc.time()
+
+for (i in 1:nn)
+{
+  mem <- kmeans(x_step00,2)
+  # beta
+  beta_compe3.1 = mem$center[1,]
+  beta_compe310 = beta_compe310 + beta_compe3.1
+  
+  beta_compe3.2 = mem$center[2,]
+  beta_compe320 = beta_compe320 + beta_compe3.2
+  
+  # psr, fdr and fn
+  correct_entry1 = which(mem$cluster[1:n1]==1)
+  psr_compe3.1 = length(correct_entry1)/n1
+  psr_compe310 = psr_compe310 +  psr_compe3.1
+  fdr_compe3.1 = length(which(mem$cluster[(n1+1):N]==1))/length(which(mem$cluster[1:N]==1))
+  fdr_compe310 = fdr_compe310 + fdr_compe3.1
+  fn_compe3.1 = length(which(mem$cluster[1:N]==1))
+  fn_compe310 = fn_compe310 +  fn_compe3.1
+ 
+  correct_entry2 = which(mem$cluster[1:n1]==2)
+  psr_compe3.2 = length(correct_entry2)/n1
+  psr_compe320 = psr_compe320 +  psr_compe3.2
+  fdr_compe3.2 = length(which(mem$cluster[(n1+1):N]==2))/length(which(mem$cluster[1:N]==2))
+  fdr_compe320 = fdr_compe320 + fdr_compe3.2
+  fn_compe3.2 = length(which(mem$cluster[1:N]==2))
+  fn_compe320 = fn_compe320 +  fn_compe3.2
+}
+
+
+# results
+t_am= (proc.time() - ptm)/nn
+t_am
+
+psr_compe310/nn
+fdr_compe310/nn
+fn_compe310/nn
+norm(beta_compe310/nn - beta_true,type="2") / norm(beta_true,type="2")
+
+psr_compe320/nn
+fdr_compe320/nn
+fn_compe320/nn
+norm(beta_compe320/nn - beta_true,type="2") / norm(beta_true,type="2")
+
+
+#  conclusion clu1: psr    fdr     time   dev    true number  
+            # clu2: psr    fdr     time   dev    true number  
+```
+
