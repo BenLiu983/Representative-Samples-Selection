@@ -7,7 +7,7 @@ output: html_document
 
 
 ```{r}
-setwd("C:/Users/liuzh/Desktop/Project/final report/code/final version")
+setwd("C:/Users/liuzh/Desktop/uOttawa/Study/Project/final report/code/Code_final")
 source("function_normal.r")
 
 # simulate representative samples f1, 2 dim normal distribution
