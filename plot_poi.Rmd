@@ -1,0 +1,80 @@
+---
+title: "Plot of representative samples selection by AM in an implicit Poisson mixture model"
+author: "Ben (Zhibin) Liu"
+date: "April 30, 2020"
+output: html_document
+---
+
+```{r}
+setwd("C:/Users/liuzh/Desktop/uOttawa/Study/Project/final report/code/Code_final")
+source("function_poi.r")
+
+set.seed(123)
+library("MASS")
+
+#simulate representative samples f1
+n1 <- 100
+beta0 <- 3
+beta1 <- 3
+#generate covariate values
+x <- runif(n=n1, min=-2, max=3)
+#compute mu's
+mu <- exp(beta0 + beta1 * x)
+#generate Y-values
+y <- rpois(n=n1, lambda=mu)
+x11 = cbind(x,y)
+
+#simulate noise samples f2
+x22_1 = runif(100, -2,3)
+x22_2 =  floor(runif(100, 0,500))
+x22 = as.matrix(cbind(x22_1,x22_2))
+
+# this dataset is for the selection 
+x_step00 = rbind(x11,x22)
+colnames(x_step00) <- c("x","y")
+
+# assign the type and prepare the dataset for the plot 
+x111 = cbind(x11,rep(1,100))
+x222 = cbind(x22,rep(0,100))
+x_step01 = as.matrix(rbind(x111,x222))
+
+colnames(x_step01) <- c("x","y","type")
+dataframe=as.data.frame(x_step01)
+dataframe$type=as.factor(dataframe$type)
+
+# plot
+row1 = c(1:200)
+am_poi(DATA=x_step00,lambda=30,p1_low=0.2,select_row=row1)
+auto_plot_poi(DATA=x_step01,lambda=30,p1_low=0.2,select_row=row1)
+
+# gif plot, after collecting dataframes of each step to a list
+df_list <- mget(ls(pattern = "^df\\d+"))
+f_list<- mget(ls(pattern = "^fit_value\\d+"))
+
+dynamic_plot_poi(dataframe_list=df_list,fit_list=f_list)
+
+# stats
+psr_am = length(which (final_row< 101))/100
+fdr_am = length(which (final_row> 100))/length(final_row)
+
+psr_am
+fdr_am
+
+length(final_row)
+
+beta_true=c(3,3)
+dev_am= norm(final_beta$coefficients - beta_true,type="2") / norm(beta_true,type="2")
+dev_am
+
+```
+
+
+
+
+
+
+
+
+
+
+
