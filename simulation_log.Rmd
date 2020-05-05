@@ -5,9 +5,9 @@ date: "April 30, 2020"
 output: html_document
 ---
 
-1 Data set up (3 different sigma)
+1. Data set up (3 different sigma)
 ```{r}
-setwd("C:/Users/liuzh/Desktop/Project/final report/code/final version")
+setwd("C:/Users/liuzh/Desktop/uOttawa/Study/Project/final report/code/Code_final")
 source("function_log.r")
 
 set.seed(123)
@@ -27,13 +27,11 @@ x1 = 3*mvrnorm(n1,c(0,0,0,0), sigma1)
 z = x1 %*% c(1,-1,1,-1)+1     
 pr = 1/(1+exp(-z))         # pass through an inv-logit function
 y = matrix(rbinom(n1,1,pr),n1,1)     # bernoulli response variable
-sum(y)
 x11 = cbind(x1,y)
 
 # generate noise samples f2
 n2= 1250
 x2 = 3*mvrnorm(n2,c(0,0,0,0),sigma1)  
-dim(x2)
 z2 = x2 %*% c(1,-1,1,-1)+1 
 
 pr2 = 1/(1+exp(-z2))
