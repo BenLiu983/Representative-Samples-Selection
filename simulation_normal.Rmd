@@ -8,7 +8,7 @@ output: html_document
 1.   Data set up (3 different sigma) 
 
 ```{r}
-setwd("C:/Users/liuzh/Desktop/Project/final report/code/final version")
+setwd("C:/Users/liuzh/Desktop/uOttawa/Study/Project/final report/code/Code_final")
 source("function_normal.r")
 
 # simulate representative samples f1, 2 dim normal distribution
@@ -180,7 +180,7 @@ fn_compe210=0
 fn_compe220=0
 
 beta0 = c(0,0,0,0,0)
-nn= 3
+nn= 100
 ptm=proc.time()
 
 for (i in 1:nn)
