@@ -1,0 +1,341 @@
+---
+title: "Representative samples selection by 5 methods in an implicit logistics mixture model"
+author: "Ben (Zhibin) Liu"
+date: "April 30, 2020"
+output: html_document
+---
+
+1 Data set up (3 different sigma)
+```{r}
+setwd("C:/Users/liuzh/Desktop/Project/final report/code/final version")
+source("function_log.r")
+
+set.seed(123)
+library(MASS)
+library(statip)
+library(glmnet)
+
+# generate representative samples f1
+n1 = 5000
+
+# can change the sigma to autoregressive or compound symmetry 
+#sigma1 = sigma_auto(4,0.5)
+#sigma1 = sigma_compound(4,0.5)
+sigma1 = diag(1,4,4)
+
+x1 = 3*mvrnorm(n1,c(0,0,0,0), sigma1)          
+z = x1 %*% c(1,-1,1,-1)+1     
+pr = 1/(1+exp(-z))         # pass through an inv-logit function
+y = matrix(rbinom(n1,1,pr),n1,1)     # bernoulli response variable
+sum(y)
+x11 = cbind(x1,y)
+
+# generate noise samples f2
+n2= 1250
+x2 = 3*mvrnorm(n2,c(0,0,0,0),sigma1)  
+dim(x2)
+z2 = x2 %*% c(1,-1,1,-1)+1 
+
+pr2 = 1/(1+exp(-z2))
+# notice pi= 1-pr2
+y2 = matrix(rbinom(n2,1,1-pr2),n2,1)
+x22 =cbind(x2,y2)
+
+# combine f1 and f2
+x_step00 = as.matrix(rbind(x11,x22))
+colnames(x_step00) <- c("x1","x2","x3","x4","y")
+
+N=nrow(x_step00)
+list=1:N
+
+```
+
+
+2. AM and FAM
+```{r}
+beta_true = c(1,1,-1,1,-1)
+
+# 100 simulations
+
+beta_am = c(0,0,0,0,0)
+beta_fam = c(0,0,0,0,0)
+
+psr_fam = 0
+fdr_fam = 0
+
+psr_am = 0
+fdr_am = 0
+
+fn_am = 0
+fn_fam = 0
+nn= 100
+
+# am time
+ptm <- proc.time()
+for (i in 1:nn)
+{
+  am_log(DATA=x_step00,lambda= 1.5,p1_low=0.2,select_row=list)
+  
+  # sum fn
+  fn_am = fn_am + length(final_row)
+  
+  # sum beta
+  beta_am =  beta_am + final_beta
+  
+  # sum psr and fdr
+  psr_am = psr_am + length(which (final_row< (n1+1)))/n1
+  fdr_am = fdr_am + length(which (final_row> n1))/length(final_row)
+}
+
+
+# am time 
+t_am= (proc.time() - ptm)/nn
+t_am
+
+# ave psr, fdr, fn, dev
+psr_am/nn
+fdr_am/nn
+fn_am/nn
+norm(beta_am/nn - beta_true,type="2") / norm(beta_true,type="2")
+
+            # summary: am     psr    fdr     time  dev    true number  
+
+
+# time for fam
+ptm2 <- proc.time()
+for (i in 1:nn)
+{
+  fam_log(DATA=x_step00,lambda= 1.5,p1_low=0.2,select_row=list)
+  
+  # sum fn
+  fn_fam = fn_fam + length(final_row_bt)
+  
+  # sum beta
+  beta_fam = beta_fam + final_beta_bt
+  
+  # sum psr and fdr
+  psr_fam = psr_fam + length(which (final_row_bt< (n1+1)))/n1
+  fdr_fam = fdr_fam + length(which (final_row_bt> n1))/length(final_row_bt)
+}
+
+# fam time 
+t_fam= (proc.time() - ptm2)/nn
+t_fam
+
+# ave psr, fdr, fn, dev
+psr_fam/nn
+fdr_fam/nn
+fn_fam/nn
+norm(beta_fam/nn - beta_true,type="2") / norm(beta_true,type="2")
+
+            # summary: fam     psr    fdr     time  dev    true number  
+
+```
+
+
+3. Competitor 1 - MLE (assume all samples are from 1 model)
+```{r}
+
+x_step00 = as.data.frame(x_step00)
+# 100 simulations
+beta0 = c(0,0,0,0,0)
+nn= 100
+ptm=proc.time()
+
+for (i in 1:nn)
+{
+  beta_compe1 = glm(y ~ x1+x2+x3+x4, family=binomial, data = x_step00)$coefficients
+  beta0 = beta0 + beta_compe1
+}
+
+# results
+
+t_am= (proc.time() - ptm)/nn
+t_am
+
+beta_true = c(1,1,-1,1,-1)
+dev_compe1 = norm(beta0/nn - beta_true,type="2") / norm(beta_true,type="2")
+dev_compe1
+
+    # conclusion:       time   dev  
+
+```
+
+
+4.  Competitor 2 - EM (assume the dataset consists of 2 different logistics regression model)
+```{r}
+#install.packages("flexmix")
+library(flexmix)
+x_step00=as.data.frame(x_step00)
+y_all=x_step00[,5]
+x1_all=x_step00[,1]
+x2_all=x_step00[,2]
+x3_all=x_step00[,3]
+x4_all=x_step00[,4]
+
+# 100 simulations
+beta_compe210=c(0,0,0,0,0)
+beta_compe220=c(0,0,0,0,0)
+
+psr_compe210=0
+fdr_compe210=0
+
+psr_compe220=0
+fdr_compe220=0
+fn_compe210=0
+fn_compe220=0
+
+beta0 = c(0,0,0,0,0)
+nn= 100
+
+ptm=proc.time()
+
+for (i in 1:nn)
+{
+  # compute final beta
+  compe2=initFlexmix(cbind(y_all,1 - y_all) ~ x1_all + x2_all+x3_all+x4_all, data = x_step00, k = 2, model = FLXMRglm(family = "binomial"), nrep = 5)
+  
+  beta_compe2.1 = parameters(compe2)[,1]
+  beta_compe2.1[is.na(beta_compe2.1)] <- 0
+  beta_compe210 = beta_compe210 + beta_compe2.1
+
+  beta_compe2.2 = parameters(compe2)[,2]
+  beta_compe2.2[is.na(beta_compe2.2)] <- 0
+  beta_compe220 = beta_compe220 + beta_compe2.2
+  
+  # compute psr, fdr and fn
+  clu = compe2@cluster
+
+  correct_entry1 = which(clu[1:N]==1)
+  psr_compe2.1 = length(which(clu[1:n1]==1))/n1
+  psr_compe210 = psr_compe210 + psr_compe2.1 
+  
+  fdr_compe2.1 = length(which(clu[(n1+1):N]==1))/length(which(clu[1:N]==1))
+  fdr_compe210 = fdr_compe210 + fdr_compe2.1
+  
+  
+  fn_compe2.1 = length(which(clu[1:N]==1))
+  fn_compe210 = fn_compe210 + fn_compe2.1
+
+  correct_entry2 = which(clu[1:N]==1)
+  psr_compe2.2 = length(which(clu[1:n1]==2))/n1
+  psr_compe220 = psr_compe220 + psr_compe2.2 
+  
+  fdr_compe2.2 = length(which(clu[(n1+1):N]==2))/length(which(clu[1:N]==2))
+  fdr_compe220 = fdr_compe220 + fdr_compe2.2
+  
+  fn_compe2.2 = length(which(clu[1:N]==2))
+  fn_compe220 = fn_compe220 + fn_compe2.2
+  
+}
+
+t_am= (proc.time() - ptm)/nn
+t_am
+
+# results
+beta_true = c(1,1,-1,1,-1)
+norm(beta_compe210[1:5]/nn - beta_true,type="2") / norm(beta_true,type="2")
+norm(beta_compe220[1:5]/nn - beta_true,type="2") / norm(beta_true,type="2")
+
+psr_compe210/nn
+fdr_compe210/nn
+fn_compe210/nn
+
+psr_compe220/nn
+fdr_compe220/nn
+fn_compe220/nn
+
+    # conclusion clu1: psr    fdr      time  dev    true number  
+              # clu2: psr    fdr      time    dev    true number  
+
+
+```
+
+
+
+5. Competitor 3 - K-means (assume dataset consists of 2 clusters)
+```{r}
+# 100 simulations
+
+beta_compe310=c(0,0,0,0,0)
+beta_compe320=c(0,0,0,0,0)
+
+psr_compe310=0
+fdr_compe310=0
+
+psr_compe320=0
+fdr_compe320=0
+fn_compe310=0
+fn_compe320=0
+
+beta0 = c(0,0,0,0,0)
+nn = 100
+
+ptm=proc.time()
+
+for (i in 1:nn)
+{
+  # beta
+  mem <- kmeans(x_step00,2)
+  
+  clu1=which(mem$cluster==1)
+  x_clu1=x_step00[clu1,]
+  model_clu1 <- glm(y ~ x1+x2+x3+x4, family=binomial, data = x_clu1)
+  beta_compe3.1 = model_clu1$coefficients
+  beta_compe3.1[is.na(beta_compe3.1)] <- 0
+  beta_compe310 = beta_compe310 + beta_compe3.1
+  
+  clu2=which(mem$cluster==2)
+  x_clu2=x_step00[clu2,]
+  model_clu2 <- glm(y ~ x1+x2+x3+x4, family=binomial, data = x_clu2)  
+  beta_compe3.2 = model_clu2$coefficients
+  beta_compe3.2[is.na(beta_compe3.2)] <- 0
+  beta_compe320 = beta_compe320 + beta_compe3.2
+  
+  # psr, fdr and fn
+  
+  correct_entry1 = which(mem$cluster[1:n1]==1)
+  psr_compe3.1 = length(correct_entry1)/n1
+  psr_compe310 = psr_compe310 +  psr_compe3.1
+  fdr_compe3.1 = length(which(mem$cluster[(n1+1):N]==1))/length(which(mem$cluster[1:N]==1))
+  fdr_compe310 = fdr_compe310 + fdr_compe3.1
+  fn_compe3.1 = length(which(mem$cluster[1:N]==1))
+  fn_compe310 = fn_compe310 +  fn_compe3.1
+ 
+  correct_entry2 = which(mem$cluster[1:n1]==2)
+  psr_compe3.2 = length(correct_entry2)/n1
+  psr_compe320 = psr_compe320 +  psr_compe3.2
+  fdr_compe3.2 = length(which(mem$cluster[(n1+1):N]==2))/length(which(mem$cluster[1:N]==2))
+  fdr_compe320 = fdr_compe320 + fdr_compe3.2
+  fn_compe3.2 = length(which(mem$cluster[1:N]==2))
+  fn_compe320 = fn_compe320 +  fn_compe3.2
+}
+
+# result
+
+t_am= (proc.time() - ptm)/nn
+t_am
+
+beta_true = c(1,1,-1,1,-1)
+norm(beta_compe310/nn - beta_true,type="2") / norm(beta_true,type="2")
+norm(beta_compe320/nn - beta_true,type="2") / norm(beta_true,type="2")
+
+psr_compe310/nn
+fdr_compe310/nn
+fn_compe310/nn
+
+psr_compe320/nn
+fdr_compe320/nn
+fn_compe320/nn
+
+
+# conclusion clu1: psr  fdr    time   dev    true number  
+          # clu2: psr   fdr   time   dev    true number     
+
+```
+
+
+
+
+
+
