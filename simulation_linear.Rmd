@@ -7,7 +7,7 @@ output: html_document
 
 1. Data set up (3 different sigma)
 ```{r}
-setwd("C:/Users/liuzh/Desktop/Project/final report/code/final version")
+setwd("C:/Users/liuzh/Desktop/uOttawa/Study/Project/final report/code/Code_final")
 source("function_linear.r")
 
 set.seed(1234)
@@ -28,8 +28,6 @@ x11 = mvrnorm(n1,mu1,sigma1)
 x1_1 = cbind(rep(1,n1),x11)
 
 y=x1_1 %*% c(5,4,3,2,1)  +eps1
-min(y)
-max(y)
 x1 = cbind(x11,y)
 
 # simulate noise samples f2.1, polynomial function
