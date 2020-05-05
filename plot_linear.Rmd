@@ -1,0 +1,84 @@
+---
+title: "Plot of representative samples selection by AM in an implicit linear mixture model"
+author: "Ben (Zhibin) Liu"
+date: "April 30, 2020"
+output: html_document
+---
+
+```{r}
+setwd("C:/Users/liuzh/Desktop/Project/final report/code/final version")
+source("function_linear.r")
+
+set.seed(1234)
+library("MASS")
+library(mvtnorm)
+
+# simulate representative samples f1
+x= runif(100,-30,30)
+eps1 = rnorm(100,0,1)
+y=x +5+eps1
+x1 = cbind(x,y)
+
+#simulate noise famples f2
+eps2 = rnorm(50,0,1)
+x2=  runif(50,-30,30)
+x22_2 = 0.5*x2^2+20
+x22 = as.matrix(cbind(x2,x22_2))
+
+#simulate noise famples f3
+x333_1 = x2
+x333_2 = runif(50, -80, -50)+eps2
+x333 = as.matrix(cbind(x333_1,x333_2))
+
+# this dataset is for the selection process
+x_step00 = rbind(x1,x22,x333)
+colnames(x_step00) <- c("x","y")
+
+# assign the type and prepare the dataset for the plot
+x11 = cbind(x1,rep(1,100))
+x21 = cbind(x22,rep(0,50))
+x31 = cbind(x333,rep(0,50))
+x_step01 = as.matrix(rbind(x11,x21,x31))
+
+colnames(x_step01) <- c("x","y","type")
+dataframe=as.data.frame(x_step01)
+dataframe$type=as.factor(dataframe$type)
+list=1:200
+
+# plot
+am_linear(DATA=x_step00,sig=1,lambda=250,p1_low=0.1,select_row= list)
+plot_linear(DATA=x_step01,sig=1,lambda=250,p1_low=0.1,select_row=list)
+
+final_beta
+beta_true = c(5,1)
+
+dev_am= norm(final_beta - beta_true,type="2") / norm(beta_true,type="2")
+dev_am
+
+psr_am = length(which (final_row< (100+1)))/100
+fdr_am = length(which (final_row> 100))/length(final_row)
+psr_am
+fdr_am
+
+length(final_row)
+
+# gif plot, after collecting dataframes of each step to a list
+df_list <- mget(ls(pattern = "^df\\d+"))
+b_list <- mget(ls(pattern = "^beta\\d+"))
+dynamic_plot_linear(dataframe_list=df_list,beta_list=b_list)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
