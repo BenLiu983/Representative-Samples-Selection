@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r}
-setwd("C:/Users/liuzh/Desktop/Project/final report/code/final version")
+setwd("C:/Users/liuzh/Desktop/uOttawa/Study/Project/final report/code/Code_final")
 source("function_linear.r")
 
 set.seed(1234)
