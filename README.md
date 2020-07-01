@@ -57,7 +57,7 @@ In summary, the AM algorithm successfully selects a majority of the representati
 
 ![plot8](https://user-images.githubusercontent.com/64850893/86277895-7ed35b00-bba5-11ea-9c4f-0f28972eb7d1.jpg)
 
-The estimation and selection results of five methods are presented in above Table. To start with, "EM", AM and FAM perform well in selecting representative samples in terms of relatively high PSR and low FDR. From the perspective of DEV, "EM" performs more accurate than AM and FAM. The result of "EM" is different from that in previous models, which is due to that the implicit model assumption of "EM" matches the true model setup. Even so, our AM and FAM still obtain satisfactory results without the assumption on implicit component model. It is noteworthy that, unlike the experiments in Gaussian or linear mixture models, the PSR or FDR in this experiment does not reach the perfect level 1 or 0.
+The estimation and selection results of five methods are presented in the above table. To start with, "EM", AM and FAM perform well in selecting representative samples in terms of relatively high PSR and low FDR. From the perspective of DEV, "EM" performs more accurate than AM and FAM. The result of "EM" is different from that in previous models, which is due to that the implicit model assumption of "EM" matches the true model setup. Even so, our AM and FAM still obtain satisfactory results without the assumption on implicit component model. It is noteworthy that, unlike the experiments in Gaussian or linear mixture models, the PSR or FDR in this experiment does not reach the perfect level 100% or 0.
 
 
 # Case 4.1 Implicit Poisson mixture model (1 variable)
@@ -69,19 +69,19 @@ In this case, most of the representative samples with few noise samples are sele
 
 # Case 4.2 Implicit Poisson mixture model (multiple variables)
 ![plot10](https://user-images.githubusercontent.com/64850893/86278315-310b2280-bba6-11ea-9a2d-8ebce871ea62.jpg)
-In this experiment, AM and FAM perform better than other methods when estimation and selection are together considered. It is noteworthy that, by the above data generation methods, some noise samples are close to true regression model, which means a small amount of noise samples will be chosen as representative samples.
+In this experiment, AM and FAM perform better than other methods when estimation and selection are together considered. It is noteworthy that, by the above data generation methods, some noise samples are close to true Poisson regression model, which means a small amount of noise samples will be chosen as representative samples.
 
 
 
 
 # Conclusion
-In this report, we developed an Approximation Maximization algorithm to select representative samples in an implicit mixture model. This approach shows potential to improve the accuracy of estimated parameters of the explicit model, which helps us extract the representative samples out of a complicate dataset. Beside, we further designed a more general first-order AM algorithm. The corresponding estimating and selecting procedure is compatible with a broad range of explicit models.I implemented experiments in 4 cases, where the explicit models are Gaussian distribution, linear regression, logistics regression and Poisson regression, respectively. Under 3 different correlation structures among variables, the AM algorithm is robust and outperforms other method in terms of estimation accuracy and selection consistency in most experiments.
+In this report, we developed an Approximation Maximization (AM) algorithm to select representative samples in an implicit mixture model. This approach shows potential to improve the accuracy of estimated parameters of the explicit model, which helps us extract the representative samples out of a complicate dataset. Beside, we further designed a more general first-order AM algorithm. The corresponding estimating and selecting procedure is compatible with a broad range of explicit models. I implemented experiments in 4 cases, where the explicit models are Gaussian distribution, linear regression, logistics regression and Poisson regression, respectively. Under 3 different correlation structures among variables, the AM algorithm is robust and outperforms other methodS in terms of estimation accuracy and selection consistency in most experiments.
 
 
 # Future work
 
 In our future investigation, we will attempt to study the specific influence of initial parameter input in our algorithm. Besides, we will design a general and
-data-driven threshold rule. At last, the theoretical guarantees of AM is another important point in our future work.
+data-driven threshold rule. In addition, the in-depth theoretical guarantees of AM is another important point in our future work.
 
 
 
