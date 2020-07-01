@@ -32,7 +32,7 @@ From the above plot, it is obvious that more and more red points are selected in
 From the above table, it is noticeable that more complex covariance structure in this experiment does not lead to obvious reduction of accuracy for AM and FAM. By comparing AM with FAM, AM is computationally more efficient than FAM, which is due to a close form of true parameter in this model.
 
 
-# Case 2.1 Implicit linear mixture model (2 variables)
+# Case 2.1 Implicit linear mixture model (1 variable)
 
 ![plot5](https://user-images.githubusercontent.com/64850893/86277218-54cd6900-bba4-11ea-867d-503cb6a8a3e6.jpg)
 
@@ -46,33 +46,42 @@ According to the figure, AM algorithm successfully selects almost all the red re
 In this experiment, the performance of all 5 methods is similar in 3 setups. AM obviously outperforms other methods in terms of DEV and selection indexes. Due to the similar reasons, "MLE", "EM" and "K-means" fail to obtain accurate estimate and representative samples set. As for FAM, although it remains good selection performance in this experiment, it is noteworthy that its estimation accuracy is lower than that in previous experiments.
 
 
+# Case 3.1 Implicit logistic mixture model (1 variable)
+
+![plot7](https://user-images.githubusercontent.com/64850893/86277737-39af2900-bba5-11ea-80f6-e650a45a2c47.jpg)
+
+In summary, the AM algorithm successfully selects a majority of the representative samples with only few noise samples after 4 iterations.
+
+
+# Case 3.2 Implicit logistic mixture model (multiples variables)
+
+![plot8](https://user-images.githubusercontent.com/64850893/86277895-7ed35b00-bba5-11ea-9c4f-0f28972eb7d1.jpg)
+
+The estimation and selection results of five methods are presented in above Table. To start with, "EM", AM and FAM perform well in selecting representative samples in terms of relatively high PSR and low FDR. From the perspective of DEV, "EM" performs more accurate than AM and FAM. The result of "EM" is different from that in previous models, which is due to that the implicit model assumption of "EM" matches the true model setup. Even so, our AM and FAM still obtain satisfactory results without the assumption on implicit component model. It is noteworthy that, unlike the experiments in Gaussian or linear mixture models, the PSR or FDR in this experiment does not reach the perfect level 1 or 0.
+
+
+# Case 4.1 Implicit Poisson mixture model (1 variable)
+
+![plot9](https://user-images.githubusercontent.com/64850893/86278141-e1c4f200-bba5-11ea-895e-17d92ee26e12.jpg)
+In this case, most of the representative samples with few noise samples are selected by AM after 5 iterations.
+
+
+
+# Case 4.2 Implicit Poisson mixture model (multiple variables)
+![plot10](https://user-images.githubusercontent.com/64850893/86278315-310b2280-bba6-11ea-9a2d-8ebce871ea62.jpg)
+In this experiment, AM and FAM perform better than other methods when estimation and selection are together considered. It is noteworthy that, by the above data generation methods, some noise samples are close to true regression model, which means a small amount of noise samples will be chosen as representative samples.
 
 
 
 
+# Conclusion
+In this report, we developed an Approximation Maximization algorithm to select representative samples in an implicit mixture model. This approach shows potential to improve the accuracy of estimated parameters of the explicit model, which helps us extract the representative samples out of a complicate dataset. Beside, we further designed a more general first-order AM algorithm. The corresponding estimating and selecting procedure is compatible with a broad range of explicit models.I implemented experiments in 4 cases, where the explicit models are Gaussian distribution, linear regression, logistics regression and Poisson regression, respectively. Under 3 different correlation structures among variables, the AM algorithm is robust and outperforms other method in terms of estimation accuracy and selection consistency in most experiments.
 
 
+# Future work
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-This approach shows potential to improve the accuracy of estimated parameters of the explicit model, which helps us extract the representative samples out of a complicate
-dataset. Experiments are conducted in 4 main cases, where the explicit models are Gaussian distribution, linear regression, logistics regression and Poisson regression, respectively. Under 3 different correlation structures among variables, the AM algorithm is robust and outperforms other method in terms of estimation accuracy and selection
-consistency in most experiments.
+In our future investigation, we will attempt to study the specific influence of initial parameter input in our algorithm. Besides, we will design a general and
+data-driven threshold rule. At last, the theoretical guarantees of AM is another important point in our future work.
 
 
 
