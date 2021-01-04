@@ -1,7 +1,14 @@
 # Representative Samples Selection in An Implicit Mixture Model with The Approximation Maximization Algorithm
 
+# Introduction
 Technological innovations have made a profound impact on knowledge discovery. Extracting useful samples from massive dataset is essential in many modern
-scientific areas. In this project, I developed an Approximation Maximization (AM) algorithm to select representative samples in an implicit mixture model. 
+scientific areas. In this project, an Approximation Maximization (AM) algorithm is developed to select representative samples in an implicit mixture model. 
+
+# Challenge
+The statistical problem is as follows.
+
+
+
 
 # Methodology 
 The detailed theoretical derivation of AM algorithm can be referred as follows.
