@@ -7,8 +7,7 @@ scientific areas. In this project, an Approximation Maximization (AM) algorithm 
 # Challenge
 The statistical problem is as follows.
 
-
-
+![plot1](https://user-images.githubusercontent.com/64850893/86276549-16837a00-bba3-11ea-8430-abe074154938.jpg)
 
 # Methodology 
 The detailed theoretical derivation of AM algorithm can be referred as follows.
